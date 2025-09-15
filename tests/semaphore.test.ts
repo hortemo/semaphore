@@ -3,6 +3,20 @@ import Semaphore from "../src";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+describe("Semaphore constructor", () => {
+  it("throws for negative or non-integer permits", () => {
+    for (const permits of [-1, -10, 1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => new Semaphore(permits)).toThrow(
+        "Semaphore: 'permits' must be a non-negative integer"
+      );
+    }
+  });
+
+  it("allows zero permits", () => {
+    expect(() => new Semaphore(0)).not.toThrow();
+  });
+});
+
 describe("Semaphore (minimal acquire/release)", () => {
   it("limits concurrency to the number of permits", async () => {
     const permits = 3;
@@ -44,6 +58,44 @@ describe("Semaphore (minimal acquire/release)", () => {
 
     await Promise.all(Array.from({ length: n }, (_, i) => task(i)));
     expect(order).toEqual([...Array(n).keys()]);
+  });
+
+  it("is FIFO when permits > 1", async () => {
+    const sem = new Semaphore(2);
+    const startOrder: number[] = [];
+    const releases: Array<(() => void) | undefined> = [];
+
+    const tasks = Array.from({ length: 4 }, (_, i) =>
+      (async () => {
+        const release = await sem.acquire();
+        startOrder.push(i);
+        await new Promise<void>((resolve) => {
+          releases[i] = () => {
+            release();
+            resolve();
+          };
+        });
+      })()
+    );
+
+    await sleep(0);
+    expect(startOrder).toEqual([0, 1]);
+    expect(releases[0]).toBeDefined();
+    expect(releases[1]).toBeDefined();
+
+    releases[0]!();
+    await sleep(0);
+    expect(startOrder).toEqual([0, 1, 2]);
+    expect(releases[2]).toBeDefined();
+
+    releases[1]!();
+    await sleep(0);
+    expect(startOrder).toEqual([0, 1, 2, 3]);
+    expect(releases[3]).toBeDefined();
+
+    releases[2]!();
+    releases[3]!();
+    await Promise.all(tasks);
   });
 
   it("release() is idempotent (double release does not leak permits)", async () => {
