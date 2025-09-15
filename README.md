@@ -29,6 +29,6 @@ await Promise.all(items.map(processItem));
 
 ## API
 
-- `new Semaphore(permits: number)`: create a semaphore with `permits` available. `permits` must be a non-negative integer.
-- `await semaphore.acquire()`: wait for a permit and receive a `Releaser`. Call it once to free the permit.
-- `type Releaser = () => void`: invoke to return the permit.
+- `new Semaphore(permits: number)`: Create a semaphore with `permits` available.
+- `await semaphore.acquire()`: Wait for a permit and receive a `Releaser`. Call it to free the permit.
+- `type Releaser = () => void`
