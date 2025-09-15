@@ -1,14 +1,14 @@
 # @hortemo/semaphore
 
-A promise-based FIFO semaphore for JavaScript/TypeScript.
+Promise-based FIFO semaphore for JavaScript and TypeScript.
 
-## Installation
+## Install
 
 ```bash
 npm install @hortemo/semaphore
 ```
 
-## Quick start
+## Use
 
 ```ts
 import Semaphore from "@hortemo/semaphore";
@@ -27,18 +27,8 @@ async function processItem(item: string): Promise<void> {
 await Promise.all(items.map(processItem));
 ```
 
-## API reference
+## API
 
-### `new Semaphore(permits: number)`
-
-Creates a semaphore with the given number of **permits**.
-
-### `semaphore.acquire(): Promise<Releaser>`
-
-Asynchronously waits for a permit. The returned promise resolves with a
-`Releaser` function. Call it once you are done with the permit. Extra calls to
-the same `Releaser` are ignored.
-
-### `type Releaser = () => void`
-
-The function returned by `acquire()`. Invoke it to return the permit.
+- `new Semaphore(permits: number)`: create a semaphore with `permits` available. `permits` must be a non-negative integer.
+- `await semaphore.acquire()`: wait for a permit and receive a `Releaser`. Call it once to free the permit.
+- `type Releaser = () => void`: invoke to return the permit.
