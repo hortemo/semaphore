@@ -1,28 +1,39 @@
 /**
- * A minimal FIFO semaphore for JS/TS.
- *
- * Terminology:
- * - permit: a unit of capacity the semaphore controls
- * - acquire: wait until a permit is granted
- * - release: return a previously acquired permit
- * - wait queue: FIFO queue of pending acquires
- *
- * Usage:
- * const release = await sem.acquire();
- * try {
- *   // critical section
- * } finally {
- *   release();
- * }
+ * A function returned by {@link Semaphore.acquire}. Call it once to return the
+ * permit you previously acquired. Extra calls are ignored, making it safe to
+ * place inside a `finally` block.
  */
 export type Releaser = () => void;
 
+/**
+ * A minimal, dependency-free FIFO semaphore for JavaScript/TypeScript.
+ *
+ * Use a semaphore when you want to limit the number of concurrent operations
+ * that touch a shared resource (for example, at most five simultaneous network
+ * requests). {@link Semaphore.acquire} gives you a promise that resolves when a
+ * permit becomes available and hands you back a {@link Releaser releaser}
+ * function for returning it.
+ *
+ * Basic usage:
+ * ```ts
+ * const release = await semaphore.acquire();
+ * try {
+ *   await doWork();
+ * } finally {
+ *   release();
+ * }
+ * ```
+ */
 export default class Semaphore {
   private _permits: number;
   private _waitQueue: Array<() => void> = [];
 
   /**
-   * @param permits Initial number of permits (non-negative integer).
+   * Create a semaphore with the given number of permits.
+   *
+   * @param permits Initial number of permits. Must be a non-negative integer.
+   * @throws {Error} If `permits` is not a whole number greater than or equal to
+   * zero.
    */
   constructor(permits: number) {
     if (!Number.isInteger(permits) || permits < 0) {
@@ -32,8 +43,11 @@ export default class Semaphore {
   }
 
   /**
-   * Acquire one permit.
-   * Resolves with a one-shot `release()` function. Extra calls to `release()` are ignored.
+   * Wait for a permit and resolve with a {@link Releaser}.
+   *
+   * The returned promise settles as soon as the semaphore can grant a permit.
+   * Once your work is complete, invoke the releaser exactly once to return the
+   * permit to the pool so the next waiter can continue.
    */
   public acquire(): Promise<Releaser> {
     return new Promise<Releaser>((resolve) => {
