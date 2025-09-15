@@ -5,7 +5,7 @@
 export type Releaser = () => void;
 
 /**
- * A minimal, dependency-free FIFO semaphore for JavaScript/TypeScript.
+ * A promise-based FIFO semaphore.
  *
  * Basic usage:
  * ```ts

@@ -1,8 +1,6 @@
 # @hortemo/semaphore
 
-A tiny, promise-based FIFO semaphore for JavaScript/TypeScript.
-
-Use it to coordinate asynchronous work by limiting how many tasks can run in parallel while still serving waiters in the order they arrived.
+A promise-based FIFO semaphore for JavaScript/TypeScript.
 
 ## Installation
 
